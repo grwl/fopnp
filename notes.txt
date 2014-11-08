@@ -20,5 +20,7 @@ Test (password abc123):
 	ssh -p 2201 brandon@localhost curl http://172.17.0.66
 
 Kill all containers:
-	sudo docker stop -t=1 `sudo docker ps -q`
+	sudo docker stop -t=0 `sudo docker ps -q`
+	sudo docker rm `sudo docker ps -aq`
+	sudo docker rmi `sudo docker images 
 
