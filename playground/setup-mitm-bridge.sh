@@ -14,19 +14,28 @@ setup_tunnel() {
 	# creates GRE tunnel to 1.2.3.4 with key 1
 	#
 
-	ip link delete gretap$2 || true
-	ip link add gretap$2 type gretap \
+	ip link delete gretap$2 > /dev/null 2>&1 || true
+	ip link add gretap$2 type gretap remote $1 key $2 \
 		local `ip route get $1 | sed -n 's/.*src //p'`
-		remote $1 key $2 \
 		
 	ip link set dev gretap$2 up
 
 	echo GRE tunnel gretap$2 created with remote $1 key $2
-done
+}
 
-setup_tunnel $1 1
-setup_tunnel $2 2
-setup_tunnel $3 3
+if [ $# -eq 1 ] ; then
+	setup_tunnel $1 1
+	setup_tunnel $1 2
+	setup_tunnel $1 3
+elif [ $# -eq 3 ] ; then
+	setup_tunnel $1 1
+	setup_tunnel $2 2
+	setup_tunnel $3 3
+else
+	echo "Usage: $0 GRE_PEER" >&2
+	echo "Usage: $0 GRE_PEER_DOWNLINK GRE_PEER_UPLINK GRE_PEER_TAP" >&2
+	exit 2
+fi
 
 if true ; then
 	brctl addbr br0 || true
