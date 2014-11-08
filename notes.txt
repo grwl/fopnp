@@ -17,7 +17,7 @@ Buiuld:
 	sudo ./launch.sh 
 
 Test (password abc123):
-	ssh -p 2201 brandon@localhost curl http://172.17.0.66
+	ssh -p 2201 brandon@localhost curl http://www.example.com
 
 Kill all containers:
 	sudo docker stop -t=0 `sudo docker ps -q`
