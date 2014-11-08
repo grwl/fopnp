@@ -1,10 +1,11 @@
 #!/bin/sh
 
-echo Stopping all fopnp/ containers ...
-docker stop -t=0 `sudo docker ps -a | grep fopnp/ | awk '{ print $1}'`
+echo Stopping all running fopnp/ containers ...
+docker ps -a | grep fopnp/ | awk '{ print $1}' | xargs --no-run-if-empty docker stop -t=0
 
-# remove all container
-#docker rm `sudo docker ps -aq`
+echo Removing all fopnp/ containers ...
+docker ps -a | grep fopnp/ | awk '{ print $1}' | xargs --no-run-if-empty docker rm
+
 #docker rmi `sudo docker images 
 
 echo Removing remove interfaces created by launch.sh ...
