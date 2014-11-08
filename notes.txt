@@ -1,0 +1,10 @@
+git clone git@github.com:grwl/fopnp.git
+(git clone https://github.com/brandon-rhodes/fopnp.git)
+
+cd fopnp/playground/
+sudo ./build.sh 
+sudo ./launch.sh 
+
+ssh -p 2201 brandon@localhost curl http://172.17.0.66
+
+sudo docker stop -t=1 `sudo docker ps -q`
