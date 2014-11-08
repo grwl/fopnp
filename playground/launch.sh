@@ -88,6 +88,32 @@ create_point_to_point () {
     give_interface_to_container Q $3 $4
     echo Created link between: $1 $3
 }
+
+create_point_to_gre () {
+    # IFACE REMOTE KEY
+    # Given arguments "modemA-eth0 1.2.3.4 1",
+    # creates GRE tunnel to 1.2.3.4 with key 1,
+    # creates modemA-eth0 interface,
+    # creates grebr1 bridge and adds both interfaces there.
+    iface=$1
+    remote=$2
+    key=$3
+
+    # create GRE tunnel
+    local=`ip route get $remote | sed -n 's/.*src //p'`
+    sudo ip link add gretap$key type gretap local $local remote $remote key $key
+    sudo ip link set dev gretap$key up
+
+    # create container interface
+    create_interface $iface
+
+    start_bridge grebr$key
+    bridge_add_interface grebr$key $iface
+    bridge_add_interface grebr$key gretap$key
+
+    echo Interface $iface tunneled to $remote with key $key
+}
+
 bridge_add_interface () {
     bridge=$1
     interface=$2
@@ -148,7 +174,11 @@ bridge_add_interface exampleCOM www-eth0
 
 create_point_to_point backbone eth0 isp eth0
 create_point_to_point backbone eth1 example eth0
-create_point_to_point isp eth1 modemA eth0
+
+#create_point_to_point isp eth1 modemA eth0
+create_point_to_gre modemA-eth0 172.16.169.136 0
+create_point_to_gre isp-eth1 172.16.169.136 1
+
 create_point_to_point isp eth2 modemB eth0
 
 # Configure manual IP addresses and routes on the point-to-points.
