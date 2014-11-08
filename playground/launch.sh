@@ -54,7 +54,7 @@ start_container () {
 # These commands are each a no-op if the command has already run.
 
 start_bridge () {               # args: BRIDGE_NAME
-    sudo brctl addbr $1 &>/dev/null || return
+    sudo brctl addbr $1 > /dev/null 2>&1 || return
     sudo ip link set $1 up
     echo Created bridge: $1
 }
@@ -72,7 +72,7 @@ create_interface () {
     interface=$1
     container=${interface%%-*}
     short_name=${interface##*-}
-    sudo ip link add $interface type veth peer name P &>/dev/null || return
+    sudo ip link add $interface type veth peer name P > /dev/null 2>&1 || return
     give_interface_to_container P $container $short_name
     echo Created interface: $interface
 }
@@ -91,7 +91,7 @@ create_point_to_point () {
 bridge_add_interface () {
     bridge=$1
     interface=$2
-    sudo brctl addif $bridge $interface &>/dev/null || return
+    sudo brctl addif $bridge $interface > /dev/null 2>&1 || return
     sudo ip link set dev $interface up
     echo Bridged interface: $interface
 }
@@ -192,7 +192,7 @@ done
 for host in h1 h2 h3 h4
 do
     n=${host#?}
-    sudo ip netns exec $host ip route del default &>/dev/null
+    sudo ip netns exec $host ip route del default >/dev/null 2>&1
     sudo ip netns exec $host ip addr add 192.168.1.1$n/24 dev eth1
     sudo ip netns exec $host ip route add default via 192.168.1.1
 done
