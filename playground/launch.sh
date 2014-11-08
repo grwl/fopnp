@@ -105,7 +105,7 @@ start_container h4 fopnp/base 2204
 start_container modemA fopnp/base
 start_container modemB fopnp/base
 start_container isp fopnp/base
-start_container backbone fopnp/dns
+start_container backbone fopnp/dns 2205
 start_container example.com fopnp/base
 start_container ftp.example.com fopnp/ftp
 start_container mail.example.com fopnp/mail
@@ -146,16 +146,16 @@ bridge_add_interface exampleCOM www-eth0
 
 # The other network connections are simple point-to-point links.
 
-create_point_to_point backbone eth0 isp eth0
-create_point_to_point backbone eth1 example eth0
+create_point_to_point backbone eth1 isp eth0
+create_point_to_point backbone eth2 example eth0
 create_point_to_point isp eth1 modemA eth0
 create_point_to_point isp eth2 modemB eth0
 
 # Configure manual IP addresses and routes on the point-to-points.
 # First, down in the direction of the broadband modems.
 
-sudo ip netns exec backbone ip addr add 10.1.1.1/32 dev eth0
-sudo ip netns exec backbone ip route add 10.25.1.1/32 dev eth0
+sudo ip netns exec backbone ip addr add 10.1.1.1/32 dev eth1
+sudo ip netns exec backbone ip route add 10.25.1.1/32 dev eth1
 sudo ip netns exec backbone ip route add 10.25.0.0/16 via 10.25.1.1
 
 sudo ip netns exec isp ip addr add 10.25.1.1/32 dev eth0
@@ -168,8 +168,8 @@ sudo ip netns exec isp ip route add default via 10.1.1.1
 
 # Second, down in the direction of the example.com machine room.
 
-sudo ip netns exec backbone ip addr add 10.1.1.1/32 dev eth1
-sudo ip netns exec backbone ip route add 10.130.1.1/32 dev eth1
+sudo ip netns exec backbone ip addr add 10.1.1.1/32 dev eth2
+sudo ip netns exec backbone ip route add 10.130.1.1/32 dev eth2
 sudo ip netns exec backbone ip route add 10.130.1.0/24 via 10.130.1.1
 
 sudo ip netns exec example ip addr add 10.130.1.1/32 dev eth0
