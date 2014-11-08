@@ -82,7 +82,7 @@ create_point_to_point () {
     # interfaces and put one inside the container "backbone" and name it
     # "eth0" and the other inside of "isp" with the name "eth1".
     #
-    sudo ip netns exec $1 ip link set $2 up &>/dev/null && return
+    sudo ip netns exec $1 ip link set $2 up && return
     sudo ip link add P type veth peer name Q
     give_interface_to_container P $1 $2
     give_interface_to_container Q $3 $4
@@ -102,14 +102,14 @@ start_container h1 fopnp/base 2201
 start_container h2 fopnp/base 2202
 start_container h3 fopnp/base 2203
 start_container h4 fopnp/base 2204
-start_container modemA fopnp/base 2205
-start_container modemB fopnp/base 2206
-start_container isp fopnp/base 2207
-start_container backbone fopnp/dns 2210
-start_container example.com fopnp/base 2211
-start_container ftp.example.com fopnp/ftp 2212
-start_container mail.example.com fopnp/mail 2213
-start_container www.example.com fopnp/www 2214
+start_container modemA fopnp/base
+start_container modemB fopnp/base
+start_container isp fopnp/base
+start_container backbone fopnp/dns
+start_container example.com fopnp/base
+start_container ftp.example.com fopnp/ftp
+start_container mail.example.com fopnp/mail
+start_container www.example.com fopnp/www
 
 # For each LAN, create an ethernet bridge and corresponding interfaces.
 
@@ -192,7 +192,7 @@ done
 for host in h1 h2 h3 h4
 do
     n=${host#?}
-    sudo ip netns exec $host ip route del default
+    sudo ip netns exec $host ip route del default &>/dev/null
     sudo ip netns exec $host ip addr add 192.168.1.1$n/24 dev eth1
     sudo ip netns exec $host ip route add default via 192.168.1.1
 done
