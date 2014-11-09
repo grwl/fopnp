@@ -37,15 +37,5 @@ else
 	exit 2
 fi
 
-if true ; then
-	brctl addbr br0 || true
-	brctl setfd br0 0
-	brctl stp br0 off
-	ifconfig br0 up
-
-	for key in 1 2 ; do
-		brctl addif br0 gretap$key
-		echo Added GRE tunnel gretap$key into br0
-	done
-fi
+./mitm-bridge --init mitm gretap1 gretap2 gretap3
 

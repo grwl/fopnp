@@ -1,0 +1,124 @@
+#!/bin/bash -xe
+
+usage() {
+	echo "Usage:" 2>&1
+	echo "	$0 --init BRIDGE LEFT_IFACE RIGHT_IFACE TAP_IFACE" 2>&1
+	echo "	$0 --deinit" 2>&1
+	echo "	$0 --reset" 2>&1
+	echo "	$0 --pass" 2>&1
+	echo "	$0 --tap-left LEFT_FILTER TAPOUT_ACTION TAP_FILTER LEFTOUT_ACTION" 2>&1
+	echo "	$0 --tap-right RIGHT_FILTER TAPOUT_ACTION TAP_FILTER RIGHTOUT_ACTION" 2>&1
+	exit 2
+}
+
+add_iface() {
+	local iface=$1
+
+	ifconfig $iface >/dev/null
+	ovs-vsctl add-port $bridge $iface
+}
+
+tap() {
+	local downstream_port=$1
+	local upstream_port=$2
+
+	# this filter is applied to packet coming from downstream. if packet matches it will go to tap
+	local filter=$3
+	# these actions (modification) will be applied to the packets before they go to tap
+	local tapout_action=$4
+
+	# this filter is applied to packets coming from tap. if packet matches it will go to upstream
+	local tap_filter=$5
+	# these actions (modification) will be applied to the packets before they go to upstream
+	local out_action=$6
+
+	ovs-ofctl add-flow $bridge in_port=$downstream_port,$filter,actions=$tapout_action,output:$tap_port
+	ovs-ofctl add-flow $bridge in_port=$tap_port,$tap_filter,actions=$out_action,output:$downstream_port
+}
+
+case "$1" in
+	"--init")
+		## Change configuration of the contraption, block all flows (reset state)
+
+		# save iface config
+		cat << __END__ > /var/run/mitm-bridge.maincfg
+bridge="$2"
+left_iface="$3"
+right_iface="$4"
+tap_iface="$5"
+__END__
+		. /var/run/mitm-bridge.maincfg
+
+		# remove bridge if exists
+		if ovs-vsctl br-exists $bridge ; then
+			ovs-vsctl del-br $bridge
+		fi
+
+		# create bridge without any flows
+		ovs-vsctl add-br $bridge
+		ovs-ofctl del-flows $bridge
+
+		# add ports
+		add_iface $left_iface
+		left_port=1
+
+		add_iface $right_iface
+		right_port=2
+
+		if [ -z "$tap_iface" ] ; then
+			tap_port=
+		else
+			add_iface $tap_iface
+			tap_port=3
+		fi
+
+		# save port config
+                cat << __END__ >> /var/run/mitm-bridge.maincfg
+left_port="$left_port"
+right_port="$right_port"
+tap_port="$tap_port"
+__END__
+		;;
+
+	"--deinit")
+		## Deconfigure the bridge
+		. /var/run/mitm-bridge.maincfg
+		ovs-vsctl br-exists $bridge && ovs-vsctl del-br $bridge || true
+		;;
+
+	"--reset")
+		## Block all flows
+		. /var/run/mitm-bridge.maincfg
+		ovs-ofctl del-flows $bridge
+		;;
+
+	"--pass")
+		# Add flows to passthrough traffic between left and right interfaces
+		. /var/run/mitm-bridge.maincfg
+
+		ovs-ofctl add-flow $bridge in_port=$left_port,priority=0,actions=output:$right_port
+		ovs-ofctl add-flow $bridge in_port=$right_port,priority=0,actions=output:$left_port
+		;;
+
+	"--tap-left")
+		# Add flows to tap into traffic from left to right
+		. /var/run/mitm-bridge.maincfg
+
+		tap $left_port $right_port $2 $3 $4 $5
+		;;
+
+	"--tap-right")
+		# Add flows to tap into traffic from right to left
+		. /var/run/mitm-bridge.maincfg
+
+		tap $right_port $left_port $2 $3 $4 $5
+		;;
+
+	*)
+		usage
+		;;
+esac
+
+ovs-ofctl dump-ports-desc $bridge || true
+ovs-ofctl dump-flows $bridge || true
+
