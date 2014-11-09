@@ -176,8 +176,8 @@ create_point_to_point backbone eth0 isp eth0
 create_point_to_point backbone eth1 example eth0
 
 #create_point_to_point isp eth1 modemA eth0
-create_point_to_gre modemA-eth0 172.16.169.136 0
-create_point_to_gre isp-eth1 172.16.169.136 1
+create_point_to_gre modemA-eth0 172.16.169.136 1
+create_point_to_gre isp-eth1 172.16.169.136 2
 
 create_point_to_point isp eth2 modemB eth0
 
