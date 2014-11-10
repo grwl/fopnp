@@ -37,5 +37,3 @@ else
 	exit 2
 fi
 
-./mitm-bridge --init mitm gretap1 gretap2 gretap3
-
